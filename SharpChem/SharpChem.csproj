@@ -63,6 +63,7 @@
     <Compile Include="TimeControl.cs" />
     <Compile Include="Waldo.cs" />
     <Compile Include="WaldoProgram.cs" />
+    <Compile Include="Widget.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -103,6 +104,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bond.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\bonder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\bonderjoin.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

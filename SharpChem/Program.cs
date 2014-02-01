@@ -49,7 +49,7 @@
             reactor.RedWaldo.SetProgram<RedProgram>();
             reactor.BlueWaldo.SetProgram<BlueProgram>();
 
-            TimeControl.Start(StepSpeed.Fast);
+            TimeControl.Start(StepSpeed.Medium);
 
             reactor.Display(1f);
             reactor.Dispose();

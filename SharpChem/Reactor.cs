@@ -159,10 +159,11 @@ namespace SharpChem
                 }).AddRegion(new ReactorRegion(6, 4, 4, 4) {
                     TileColor = ReactorRegion.ColorAD,
                     Label = RegionLabel.OutputD
-                });
+                }).AddBonder(4, 3).AddBonder(5, 3);
         }
 
         private List<ReactorRegion> _regions;
+        private List<Widget> _widgets;
 
         internal int Width { get; private set; }
 
@@ -170,9 +171,12 @@ namespace SharpChem
 
         internal IEnumerable<ReactorRegion> Regions { get { return _regions; } }
 
+        internal IEnumerable<Widget> Widgets { get { return _widgets; } }
+
         internal ReactorBuilder(int width, int height)
         {
             _regions = new List<ReactorRegion>();
+            _widgets = new List<Widget>();
 
             Width = width;
             Height = height;
@@ -181,6 +185,12 @@ namespace SharpChem
         internal ReactorBuilder AddRegion(ReactorRegion region)
         {
             _regions.Add(region);
+            return this;
+        }
+
+        internal ReactorBuilder AddBonder(int x, int y)
+        {
+            _widgets.Add(new Bonder(x, y));
             return this;
         }
     }
@@ -192,6 +202,7 @@ namespace SharpChem
         
         private ReactorRegion _baseRegion;
         private IEnumerable<ReactorRegion> _regions;
+        private IEnumerable<Widget> _widgets;
         private List<Molecule> _molecules;
 
         public int Width { get; private set; }
@@ -202,6 +213,8 @@ namespace SharpChem
 
         public IEnumerable<ReactorRegion> Inputs { get { return _regions.Where(x => x.IsInput); } }
         public IEnumerable<ReactorRegion> Outputs { get { return _regions.Where(x => x.IsOutput); } }
+
+        public IEnumerable<Bonder> Bonders { get { return _widgets.OfType<Bonder>(); } }
 
         public ReactorRegion this[RegionLabel label]
         {
@@ -218,6 +231,12 @@ namespace SharpChem
             };
 
             _regions = builder.Regions;
+            _widgets = builder.Widgets;
+
+            foreach (var widget in _widgets) {
+                widget.Reactor = this;
+            }
+
             _molecules = new List<Molecule>();
 
             RedWaldo = new Waldo(this, WaldoColor.Red);
@@ -296,6 +315,10 @@ namespace SharpChem
 
                 foreach (var region in _regions) {
                     region.Render(shader);
+                }
+
+                foreach (var widget in _widgets) {
+                    widget.Render(shader);
                 }
 
                 foreach (var molecule in _molecules) {
