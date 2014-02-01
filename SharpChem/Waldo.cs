@@ -32,13 +32,35 @@ namespace SharpChem
 
         public WaldoColor Color { get; private set; }
 
-        public bool Grabbed { get; set; }
+        public bool IsGrabbed { get; private set; }
+
+        internal Molecule HeldMolecule { get; private set; }
 
         internal Waldo(Reactor reactor, WaldoColor color)
         {
             Reactor = reactor;
             Color = color;
-            Grabbed = false;
+            IsGrabbed = false;
+        }
+
+        public void Grab()
+        {
+            IsGrabbed = true;
+            HeldMolecule = Reactor.GrabMolecule(X, Y);
+        }
+
+        public void Drop()
+        {
+            if (HeldMolecule != null) Reactor.DropMolecule(HeldMolecule);
+
+            IsGrabbed = false;
+            HeldMolecule = null;
+        }
+
+        public void GrabDrop()
+        {
+            if (IsGrabbed) Drop();
+            else Grab();
         }
 
         public void SetProgram<T>()
@@ -69,6 +91,10 @@ namespace SharpChem
         {
             if (_program == null) return;
 
+            if (IsGrabbed && HeldMolecule != null && !HeldMolecule.Move(Reactor, X - _oldX, Y - _oldY)) {
+                throw new InvalidOperationException("Molecule collision detected.");
+            }
+
             _oldX = X;
             _oldY = Y;
 
@@ -90,13 +116,17 @@ namespace SharpChem
 
         internal void Render(SpriteShader shader)
         {
-            var x = _oldX + (X - _oldX) * TimeControl.Delta;
-            var y = _oldY + (Y - _oldY) * TimeControl.Delta;
+            var delta = new Vector2(X - _oldX, Y - _oldY) * TimeControl.Delta;
+            var pos = new Vector2(_oldX, _oldY) + delta;
 
-            var xGap = Grabbed ? 0f : 4f;
+            var xGap = IsGrabbed ? 0f : 4f;
 
-            WaldoSprite.X = x * 80f - xGap;
-            WaldoSprite.Y = y * 80f;
+            if (IsGrabbed && HeldMolecule != null) {
+                HeldMolecule.Render(shader, delta);
+            }
+
+            WaldoSprite.X = pos.X * 80f - xGap;
+            WaldoSprite.Y = pos.Y * 80f;
             WaldoSprite.Rotation = 0f;
 
             WaldoSprite.Colour = Color == WaldoColor.Red
@@ -105,8 +135,8 @@ namespace SharpChem
 
             WaldoSprite.Render(shader);
 
-            WaldoSprite.X = (x + 1f) * 80f + xGap;
-            WaldoSprite.Y = (y + 1f) * 80f;
+            WaldoSprite.X = (pos.X + 1f) * 80f + xGap;
+            WaldoSprite.Y = (pos.Y + 1f) * 80f;
             WaldoSprite.Rotation = MathHelper.Pi;
 
             WaldoSprite.Render(shader);

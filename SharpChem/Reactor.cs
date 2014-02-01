@@ -139,7 +139,7 @@ namespace SharpChem
 
         private ReactorRegion _baseRegion;
         private IEnumerable<ReactorRegion> _regions;
-        private List<Atom> _atoms;
+        private List<Molecule> _molecules;
 
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -160,17 +160,36 @@ namespace SharpChem
             };
 
             _regions = builder.Regions;
-            _atoms = new List<Atom>();
+            _molecules = new List<Molecule>();
 
             RedWaldo = new Waldo(this, WaldoColor.Red);
             BlueWaldo = new Waldo(this, WaldoColor.Blue);
 
-            _atoms.Add(new Atom(Element.C));
-            _atoms.Add(new Atom(Element.Mg));
-            _atoms.Add(new Atom(Element.H));
-            _atoms.Add(new Atom(Element.He));
+            _molecules.Add(new Molecule {
+                { Element.C, 2, 2 },
+                { Element.H, 2, 1 }, { 2, 2, 2, 1 },
+                { Element.H, 1, 2 }, { 2, 2, 1, 2 },
+                { Element.O, 3, 2 }, { 2, 2, 3, 2 }, { 2, 2, 3, 2 },
+            });
 
             _steps = 0;
+        }
+
+        internal Molecule GrabMolecule(int x, int y)
+        {
+            var molecule = _molecules.FirstOrDefault(m => m.HitTest(x, y));
+            if (molecule != null) _molecules.Remove(molecule);
+
+            return molecule;
+        }
+
+        internal void DropMolecule(Molecule molecule)
+        {
+            if (_molecules.Contains(molecule)) {
+                throw new InvalidOperationException("Can't drop already dropped molecule.");
+            }
+
+            _molecules.Add(molecule);
         }
 
         public void Display(float scale = 1f)
@@ -197,8 +216,8 @@ namespace SharpChem
                 region.Render(shader);
             }
 
-            for (int i = 0; i < _atoms.Count; ++i) {
-                _atoms[i].Render(shader, new Vector2(1f + i, 1f));
+            foreach (var molecule in _molecules) {
+                molecule.Render(shader);
             }
 
             RedWaldo.Render(shader);

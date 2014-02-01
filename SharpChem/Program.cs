@@ -8,7 +8,9 @@
             while (true) {
                 Move(Direction.Right, 5);
                 Move(Direction.Down, 3);
+                GrabDrop();
                 Move(Direction.Left, 5);
+                GrabDrop();
                 Move(Direction.Up, 3);
                 GrabDrop();
             }
@@ -21,11 +23,21 @@
         protected override void OnThink()
         {
             while (true) {
-                Move(Direction.Right, 7);
-                Move(Direction.Down, 5);
-                Move(Direction.Left, 7);
-                Move(Direction.Up, 5);
-                GrabDrop();
+                if ((Waldo.X & 1) == 0) {
+                    if (Waldo.Y > 0) {
+                        Move(Direction.Up);
+                    } else {
+                        Move(Direction.Right);
+                    }
+                } else {
+                    if (Waldo.Y < Reactor.Height - 1) {
+                        Move(Direction.Down);
+                    } else if (Waldo.X == Reactor.Width - 1) {
+                        Move(Direction.Left, Reactor.Width - 1);
+                    } else {
+                        Move(Direction.Right);
+                    }
+                }
             }
         }
     }
@@ -39,7 +51,7 @@
             reactor.RedWaldo.SetProgram<LittleLoop>();
             reactor.BlueWaldo.SetProgram<BigLoop>();
 
-            TimeControl.Start(StepSpeed.Fast);
+            TimeControl.Start(StepSpeed.Medium);
 
             reactor.Display(1f);
             reactor.Dispose();

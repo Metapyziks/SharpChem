@@ -122,17 +122,17 @@ namespace SharpChem
 
         protected void Grab()
         {
-            Waldo.Grabbed = true;
+            Waldo.Grab();
         }
 
         protected void Drop()
         {
-            Waldo.Grabbed = false;
+            Waldo.Drop();
         }
 
         protected void GrabDrop()
         {
-            Waldo.Grabbed = !Waldo.Grabbed;
+            Waldo.GrabDrop();
         }
 
         protected void Move(Direction dir, int steps)

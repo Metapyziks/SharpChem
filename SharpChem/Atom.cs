@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTKTK.Scene;
@@ -84,14 +83,38 @@ namespace SharpChem
     internal class Atom
     {
         private static readonly Sprite _atomSprite = new Sprite(new BitmapTexture2D(Properties.Resources.atom));
+        private static readonly Sprite _bondSprite = new Sprite(new BitmapTexture2D(Properties.Resources.bond))
+        { UseCentreAsOrigin = true, Colour = new Color4(0xe6, 0xe6, 0xe6, 0xff) };
+        
+        private static int _nextID = 0;
 
+        private Dictionary<Atom, int> _bonds;
         private Text _text;
+
+        public int ID { get; private set; }
+
+        public int XOffset { get; private set; }
+
+        public int YOffset { get; private set; }
+
+        public int X { get { return Molecule.OriginX + XOffset; } }
+        public int Y { get { return Molecule.OriginY + YOffset; } }
+
+        public Molecule Molecule { get; private set; }
 
         public Element Element { get; private set; }
 
-        public Atom(Element element)
+        public Atom(Element element, Molecule molecule, int xoffset, int yoffset)
         {
+            ID = ++_nextID;
+
             Element = element;
+            Molecule = molecule;
+
+            XOffset = xoffset;
+            YOffset = yoffset;
+
+            _bonds = new Dictionary<Atom, int>();
 
             _text = new Text(new Font(new FontFamily("Century Gothic"), 18f));
             _text.Value = Element.ToString();
@@ -99,13 +122,56 @@ namespace SharpChem
             _text.UseCentreAsOrigin = true;
         }
 
-        public void Render(SpriteShader shader, Vector2 pos)
+        public void AddBond(Atom other)
         {
-            _atomSprite.Position = pos * 80f;
+            if (_bonds.Count >= Element.GetMaxBonds()) {
+                throw new InvalidOperationException(String.Format(
+                    "Can't bond a {0} atom more than {1} times.",
+                    Element.GetFullName(), Element.GetMaxBonds()));
+            }
+
+            if (!_bonds.ContainsKey(other)) {
+                _bonds.Add(other, 1);
+            } else {
+                _bonds[other] += 1;
+            }
+        }
+
+        public void RenderBonds(SpriteShader shader, Vector2 delta = default(Vector2))
+        {
+            var pos = new Vector2(X + 0.5f, Y + 0.5f) * 80f;
+
+            foreach (var bond in _bonds.Keys) {
+                if (bond.ID < this.ID) continue;
+
+                int count = _bonds[bond];
+
+                var mid = new Vector2(this.X + bond.X + 1f, this.Y + bond.Y + 1f) * 40f;
+                var dir = mid - pos;
+                var lft = new Vector2(dir.Y, -dir.X).Normalized() * 12f;
+
+                _bondSprite.Rotation = (float) Math.Atan2(dir.Y, dir.X);
+
+                for (int i = 0; i < count; ++i) {
+                    var offset = i - (count - 1) * 0.5f;
+
+                    _bondSprite.Position = mid + lft * offset + delta * 80f;
+                    _bondSprite.Render(shader);
+                }
+            }
+        }
+
+        public void Render(SpriteShader shader, Vector2 delta = default(Vector2))
+        {
+            var pos = new Vector2(X, Y) * 80f;
+
+            _atomSprite.Position = pos + delta * 80f;
             _atomSprite.Colour = Element.GetColor();
             _atomSprite.Render(shader);
 
-            _text.Position = (pos + new Vector2(0.5f, 0.5f)) * 80f;
+            pos += new Vector2(40f, 40f);
+
+            _text.Position = pos + delta * 80f;
             _text.Render(shader);
         }
     }
