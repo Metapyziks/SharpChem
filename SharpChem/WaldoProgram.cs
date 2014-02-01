@@ -24,6 +24,19 @@ namespace SharpChem
         MoveDown = 4
     }
 
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+    public class StartPositionAttribute : Attribute
+    {
+        public int X { get; private set; }
+        public int Y { get; private set; }
+
+        public StartPositionAttribute(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
     public abstract class WaldoProgram : IDisposable
     {
         public const int TimeoutMillis = 1000;

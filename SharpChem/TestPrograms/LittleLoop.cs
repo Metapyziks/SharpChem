@@ -1,5 +1,6 @@
 ﻿using SharpChem;
 
+[StartPosition(3, 2)]
 class LittleLoop : WaldoProgram
 {
     protected override void OnThink()

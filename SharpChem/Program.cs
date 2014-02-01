@@ -4,13 +4,13 @@
     {
         static void Main(string[] args)
         {
-            using (var reactor = new Reactor(ReactorBuilder.CreateDefault())) {
-                reactor.RedWaldo.SetProgram<LittleLoop>(2, 2);
+            var reactor = Challenge.Get("Hello world!");
+            reactor.RedWaldo.SetProgram<LittleLoop>();
 
-                TimeControl.Start(StepSpeed.Slow);
+            TimeControl.Start(StepSpeed.Fast);
 
-                reactor.Display();
-            }
+            reactor.Display(0.5f);
+            reactor.Dispose();
         }
     }
 }
