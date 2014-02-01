@@ -37,9 +37,6 @@ namespace SharpChem
 
         private Action _nextAction;
 
-        internal int StartX;
-        internal int StartY;
-
         public Waldo Waldo { get; internal set; }
 
         public Reactor Reactor { get { return Waldo.Reactor; } }
@@ -48,9 +45,6 @@ namespace SharpChem
         {
             _waitSignal = new AutoResetEvent(false);
             _actSignal = new AutoResetEvent(false);
-
-            StartX = 0;
-            StartY = 0;
         }
 
         internal void Begin()
@@ -61,7 +55,7 @@ namespace SharpChem
 
         private void Think()
         {
-            FinishAction();
+            _waitSignal.WaitOne();
             OnThink();
         }
 
