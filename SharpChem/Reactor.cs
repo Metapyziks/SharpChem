@@ -139,6 +139,7 @@ namespace SharpChem
 
         private ReactorRegion _baseRegion;
         private IEnumerable<ReactorRegion> _regions;
+        private List<Atom> _atoms;
 
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -159,9 +160,15 @@ namespace SharpChem
             };
 
             _regions = builder.Regions;
+            _atoms = new List<Atom>();
 
             RedWaldo = new Waldo(this, WaldoColor.Red);
             BlueWaldo = new Waldo(this, WaldoColor.Blue);
+
+            _atoms.Add(new Atom(Element.C));
+            _atoms.Add(new Atom(Element.Mg));
+            _atoms.Add(new Atom(Element.H));
+            _atoms.Add(new Atom(Element.He));
 
             _steps = 0;
         }
@@ -188,6 +195,10 @@ namespace SharpChem
 
             foreach (var region in _regions) {
                 region.Render(shader);
+            }
+
+            for (int i = 0; i < _atoms.Count; ++i) {
+                _atoms[i].Render(shader, new Vector2(1f + i, 1f));
             }
 
             RedWaldo.Render(shader);

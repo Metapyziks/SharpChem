@@ -41,7 +41,7 @@
 
             TimeControl.Start(StepSpeed.Fast);
 
-            reactor.Display(0.5f);
+            reactor.Display(1f);
             reactor.Dispose();
         }
     }
