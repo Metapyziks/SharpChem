@@ -58,7 +58,6 @@
     </Compile>
     <Compile Include="Reactor.cs" />
     <Compile Include="ReactorWindow.cs" />
-    <Compile Include="TestPrograms\LittleLoop.cs" />
     <Compile Include="TimeControl.cs" />
     <Compile Include="Waldo.cs" />
     <Compile Include="WaldoProgram.cs" />
