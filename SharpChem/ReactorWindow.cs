@@ -34,13 +34,6 @@ namespace SharpChem
             GL.ClearColor(new Color4(0x06, 0x06, 0x06, 0xff));
         }
 
-        protected override void OnUpdateFrame(FrameEventArgs e)
-        {
-            base.OnUpdateFrame(e);
-            
-            Reactor.Update();
-        }
-
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);

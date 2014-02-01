@@ -21,7 +21,11 @@ namespace SharpChem
         MoveLeft = 1,
         MoveUp = 2,
         MoveRight = 3,
-        MoveDown = 4
+        MoveDown = 4,
+        InputA = 5,
+        InputB = 6,
+        OutputA = 7,
+        OutputB = 8
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
@@ -67,6 +71,7 @@ namespace SharpChem
         {
             _waitSignal.WaitOne();
             OnThink();
+            while (true) Wait();
         }
 
         internal Action NextAction()
@@ -133,6 +138,15 @@ namespace SharpChem
         protected void GrabDrop()
         {
             Waldo.GrabDrop();
+        }
+
+        protected void Input(RegionLabel region)
+        {
+            if (!region.HasFlag(RegionLabel.Input)) {
+                throw new ArgumentException("Can't input from an output.");
+            }
+
+            Reactor.DropMolecule(Reactor[region].InputMolecule());
         }
 
         protected void Move(Direction dir, int steps)

@@ -9,7 +9,7 @@ using OpenTKTK.Textures;
 
 namespace SharpChem
 {
-    public enum ReactorLabel : byte
+    public enum RegionLabel : byte
     {
         None = 0,
 
@@ -34,6 +34,10 @@ namespace SharpChem
         internal static readonly Sprite _outputCSprite = new Sprite(new BitmapTexture2D(Properties.Resources.outputc));
         internal static readonly Sprite _outputDSprite = new Sprite(new BitmapTexture2D(Properties.Resources.outputd));
 
+        private Dictionary<Molecule, int> _blueprints;
+        private Random _rand;
+        private int _lastPulse;
+
         public int X { get; private set; }
 
         public int Y { get; private set; }
@@ -44,19 +48,61 @@ namespace SharpChem
 
         internal Color4 TileColor { get; set; }
 
-        public ReactorLabel Label { get; set; }
+        public RegionLabel Label { get; set; }
         
-        public bool IsInput { get { return Label.HasFlag(ReactorLabel.Input); } }
-        public bool IsOutput { get { return Label.HasFlag(ReactorLabel.Output); } }
+        public bool IsInput { get { return Label.HasFlag(RegionLabel.Input); } }
+        public bool IsOutput { get { return Label.HasFlag(RegionLabel.Output); } }
 
         internal ReactorRegion(int x, int y, int width, int height)
         {
             X = x; Y = y; Width = width; Height = height;
+
+            _rand = new Random(0x198e7f0f);
+            _blueprints = new Dictionary<Molecule, int>();
+        }
+
+        internal void AddBlueprint(Molecule molecule, int weighting = 1)
+        {
+            _blueprints.Add(molecule, weighting);
+        }
+
+        internal Molecule InputMolecule()
+        {
+            if (!Label.HasFlag(RegionLabel.Input)) {
+                throw new InvalidOperationException("Can't input a molecule from an output.");
+            }
+
+            int sum = _blueprints.Sum(x => x.Value);
+            int val = _rand.Next(sum);
+
+            Molecule input = null;
+            foreach (var molecule in _blueprints.Keys) {
+                val -= _blueprints[molecule];
+
+                if (val <= 0) {
+                    input = molecule;
+                    break;
+                }
+            }
+
+            if (input == null) return null;
+
+            _lastPulse = TimeControl.Steps;
+
+            return input.Clone(X, Y);
         }
 
         internal void Render(SpriteShader shader)
         {
-            Reactor.TileSprite.Colour = TileColor;
+            float pulse = Math.Max(0f, 2f - (TimeControl.Steps + TimeControl.Delta - _lastPulse)) * 0.5f;
+
+            var pulseClr = new Color4(0x60, 0x60, 0x60, 0xff);
+
+            Reactor.TileSprite.Colour = new Color4(
+                TileColor.R + (pulseClr.R - TileColor.R) * pulse,
+                TileColor.G + (pulseClr.G - TileColor.G) * pulse,
+                TileColor.B + (pulseClr.B - TileColor.B) * pulse, 
+                1f);
 
             for (int x = X; x < X + Width; ++x) {
                 for (int y = Y; y < Y + Height; ++y) {
@@ -68,13 +114,13 @@ namespace SharpChem
             Sprite labelSprite = null;
 
             switch (Label) {
-                case ReactorLabel.InputA:
+                case RegionLabel.InputA:
                     labelSprite = _inputASprite; break;
-                case ReactorLabel.InputB:
+                case RegionLabel.InputB:
                     labelSprite = _inputBSprite; break;
-                case ReactorLabel.OutputC:
+                case RegionLabel.OutputC:
                     labelSprite = _outputCSprite; break;
-                case ReactorLabel.OutputD:
+                case RegionLabel.OutputD:
                     labelSprite = _outputDSprite; break;
             }
 
@@ -94,16 +140,16 @@ namespace SharpChem
             return new ReactorBuilder(10, 8)
                 .AddRegion(new ReactorRegion(0, 0, 4, 4) {
                     TileColor = ReactorRegion.ColorAD,
-                    Label = ReactorLabel.InputA
+                    Label = RegionLabel.InputA
                 }).AddRegion(new ReactorRegion(0, 4, 4, 4) {
                     TileColor = ReactorRegion.ColorBC,
-                    Label = ReactorLabel.InputB
+                    Label = RegionLabel.InputB
                 }).AddRegion(new ReactorRegion(6, 0, 4, 4) {
                     TileColor = ReactorRegion.ColorBC,
-                    Label = ReactorLabel.OutputC
+                    Label = RegionLabel.OutputC
                 }).AddRegion(new ReactorRegion(6, 4, 4, 4) {
                     TileColor = ReactorRegion.ColorAD,
-                    Label = ReactorLabel.OutputD
+                    Label = RegionLabel.OutputD
                 });
         }
 
@@ -150,13 +196,18 @@ namespace SharpChem
         public IEnumerable<ReactorRegion> Inputs { get { return _regions.Where(x => x.IsInput); } }
         public IEnumerable<ReactorRegion> Outputs { get { return _regions.Where(x => x.IsOutput); } }
 
+        public ReactorRegion this[RegionLabel label]
+        {
+            get { return _regions.First(x => x.Label == label); }
+        }
+
         internal Reactor(ReactorBuilder builder)
         {
             Width = builder.Width;
             Height = builder.Height;
 
             _baseRegion = new ReactorRegion(0, 0, Width, Height) {
-                Label = ReactorLabel.None, TileColor = ReactorRegion.ColorDefault
+                Label = RegionLabel.None, TileColor = ReactorRegion.ColorDefault
             };
 
             _regions = builder.Regions;
@@ -165,14 +216,7 @@ namespace SharpChem
             RedWaldo = new Waldo(this, WaldoColor.Red);
             BlueWaldo = new Waldo(this, WaldoColor.Blue);
 
-            _molecules.Add(new Molecule {
-                { Element.C, 2, 2 },
-                { Element.H, 2, 1 }, { 2, 2, 2, 1 },
-                { Element.H, 1, 2 }, { 2, 2, 1, 2 },
-                { Element.O, 3, 2 }, { 2, 2, 3, 2 }, { 2, 2, 3, 2 },
-            });
-
-            _steps = 0;
+            TimeControl.Step += (sender, e) => Update();
         }
 
         internal Molecule GrabMolecule(int x, int y)
@@ -201,11 +245,9 @@ namespace SharpChem
 
         internal void Update()
         {
-            while (_steps < TimeControl.Steps) {
-                ++_steps;
-                RedWaldo.Think();
-                BlueWaldo.Think();
-            }
+            ++_steps;
+            RedWaldo.Think();
+            BlueWaldo.Think();
         }
 
         internal void Render(SpriteShader shader)

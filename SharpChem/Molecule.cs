@@ -26,6 +26,23 @@ namespace SharpChem
             _atoms = new List<Atom>();
         }
 
+        public Molecule Clone(int dx, int dy)
+        {
+            var molecule = new Molecule();
+            var clones = _atoms.ToDictionary(x => x,
+                x => molecule.Add(x.Element, x.X + dx, x.Y + dy));
+
+            foreach (var key in clones.Keys) {
+                var clone = clones[key];
+                foreach (var bond in key.Bonds) {
+                    var other = clones[bond];
+                    clone.AddBond(other);
+                }
+            }
+
+            return molecule;
+        }
+
         public bool Move(Reactor reactor, int dx, int dy)
         {
             OriginX += dx;
@@ -38,14 +55,18 @@ namespace SharpChem
             return true;
         }
 
-        public void Add(Element elem, int x, int y)
+        public Atom Add(Element elem, int x, int y)
         {
             if (_atoms.Count == 0) {
                 OriginX = x;
                 OriginY = y;
             }
 
-            _atoms.Add(new Atom(elem, this, x - OriginX, y - OriginY));
+            var atom = new Atom(elem, this, x - OriginX, y - OriginY);
+
+            _atoms.Add(atom);
+
+            return atom;
         }
 
         public void Add(int ax, int ay, int bx, int by)

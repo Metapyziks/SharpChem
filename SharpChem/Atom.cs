@@ -104,6 +104,8 @@ namespace SharpChem
 
         public Element Element { get; private set; }
 
+        public IEnumerable<Atom> Bonds { get { return _bonds.SelectMany(x => Enumerable.Repeat(x.Key, x.Value)); } }
+
         public Atom(Element element, Molecule molecule, int xoffset, int yoffset)
         {
             ID = ++_nextID;
@@ -173,6 +175,11 @@ namespace SharpChem
 
             _text.Position = pos + delta * 80f;
             _text.Render(shader);
+        }
+
+        public override string ToString()
+        {
+            return Element.ToString();
         }
     }
 }
