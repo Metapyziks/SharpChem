@@ -18,19 +18,27 @@ namespace SharpChem
         private static Stopwatch _stopwatch = new Stopwatch();
 
         private static StepSpeed _speed;
+        private static int _steps;
 
         static TimeControl()
         {
             _timer.AutoReset = true;
             _timer.Elapsed += (sender, e) => {
-                ++Steps;
-                _stopwatch.Restart();
-                
+                ++_steps;
+
                 if (Step != null) Step(sender, e);
+
+                _stopwatch.Restart();
             };
         }
 
-        public static int Steps { get; private set; }
+        public static int Steps
+        {
+            get
+            {
+                return _steps;
+            }
+        }
 
         public static float Delta
         {
@@ -58,7 +66,7 @@ namespace SharpChem
 
             if (_stopwatch.ElapsedMilliseconds > 0) {
                 _stopwatch.Reset();
-                ++Steps;
+                ++_steps;
             }
         }
     }

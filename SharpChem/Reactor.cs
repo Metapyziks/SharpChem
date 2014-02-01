@@ -110,7 +110,7 @@ namespace SharpChem
             Reactor.TileSprite.Colour = new Color4(
                 TileColor.R + (pulseClr.R - TileColor.R) * pulse,
                 TileColor.G + (pulseClr.G - TileColor.G) * pulse,
-                TileColor.B + (pulseClr.B - TileColor.B) * pulse, 
+                TileColor.B + (pulseClr.B - TileColor.B) * pulse,
                 1f);
 
             for (int x = X; x < X + Width; ++x) {
@@ -189,9 +189,7 @@ namespace SharpChem
     {
         private static readonly BitmapTexture2D _tileTexture = new BitmapTexture2D(Properties.Resources.tile);
         internal static readonly Sprite TileSprite = new Sprite(_tileTexture);
-
-        private int _steps;
-
+        
         private ReactorRegion _baseRegion;
         private IEnumerable<ReactorRegion> _regions;
         private List<Molecule> _molecules;
@@ -230,12 +228,10 @@ namespace SharpChem
 
         internal Molecule GrabMolecule(int x, int y)
         {
-            lock (_molecules) {
-                var molecule = _molecules.FirstOrDefault(m => m.HitTest(x, y));
-                if (molecule != null) _molecules.Remove(molecule);
+            var molecule = _molecules.FirstOrDefault(m => m.HitTest(x, y));
+            if (molecule != null) _molecules.Remove(molecule);
 
-                return molecule;
-            }
+            return molecule;
         }
 
         internal void DropMolecule(Molecule molecule)
@@ -244,9 +240,7 @@ namespace SharpChem
                 throw new InvalidOperationException("Can't drop already dropped molecule.");
             }
 
-            lock (_molecules) {
-                _molecules.Add(molecule);
-            }
+            _molecules.Add(molecule);
         }
 
         internal bool Input(RegionLabel region)
@@ -255,15 +249,13 @@ namespace SharpChem
                 throw new ArgumentException("Can't input from an output.");
             }
 
-            lock (_molecules) {
-                var molecule = this[region].Input();
+            var molecule = this[region].Input();
 
-                if (molecule != null) {
-                    DropMolecule(molecule);
-                    return true;
-                } else {
-                    return false;
-                }
+            if (molecule != null) {
+                DropMolecule(molecule);
+                return true;
+            } else {
+                return false;
             }
         }
 
@@ -275,13 +267,11 @@ namespace SharpChem
 
             var reg = this[region];
 
-            lock (_molecules) {
-                var molecule = _molecules.FirstOrDefault(x => x.IsWithinRegion(reg));
-                _molecules.Remove(molecule);
-                reg.Output(molecule);
+            var molecule = _molecules.FirstOrDefault(x => x.IsWithinRegion(reg));
+            _molecules.Remove(molecule);
+            reg.Output(molecule);
 
-                return _molecules.Count(x => x.IsWithinRegion(reg)) == 0;
-            }
+            return _molecules.Count(x => x.IsWithinRegion(reg)) == 0;
         }
 
         public void Display(float scale = 1f)
@@ -293,27 +283,28 @@ namespace SharpChem
 
         internal void Update()
         {
-            ++_steps;
-            RedWaldo.Think();
-            BlueWaldo.Think();
+            lock (this) {
+                RedWaldo.Think();
+                BlueWaldo.Think();
+            }
         }
 
         internal void Render(SpriteShader shader)
         {
-            _baseRegion.Render(shader);
+            lock (this) {
+                _baseRegion.Render(shader);
 
-            foreach (var region in _regions) {
-                region.Render(shader);
-            }
+                foreach (var region in _regions) {
+                    region.Render(shader);
+                }
 
-            lock (_molecules) {
                 foreach (var molecule in _molecules) {
                     molecule.Render(shader);
                 }
-            }
 
-            RedWaldo.Render(shader);
-            BlueWaldo.Render(shader);
+                RedWaldo.Render(shader);
+                BlueWaldo.Render(shader);
+            }
         }
 
         public void Dispose()

@@ -146,7 +146,7 @@ namespace SharpChem
                 throw new ArgumentException("Can't input from an output.");
             }
 
-            if (!Reactor.Input(region)) Wait();
+            while (!Reactor.Input(region)) Wait();
         }
 
         protected void Output(RegionLabel region)
@@ -155,7 +155,7 @@ namespace SharpChem
                 throw new ArgumentException("Can't output to an input.");
             }
 
-            if (!Reactor.Output(region)) Wait();
+            while (!Reactor.Output(region)) Wait();
         }
 
         protected void Move(Direction dir, int steps)
