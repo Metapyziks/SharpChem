@@ -49,6 +49,9 @@
             reactor.RedWaldo.SetProgram<RedProgram>();
             reactor.BlueWaldo.SetProgram<BlueProgram>();
 
+            reactor.PlaceBonder(6, 4);
+            reactor.PlaceBonder(7, 4);
+
             TimeControl.Start(StepSpeed.Medium);
 
             reactor.Display(1f);

@@ -14,13 +14,15 @@ namespace SharpChem
 {
     public abstract class Widget
     {
-        public Reactor Reactor { get; internal set; }
+        public Reactor Reactor { get; private set; }
 
         public int X { get; private set; }
         public int Y { get; private set; }
 
-        public Widget(int x, int y)
+        public Widget(Reactor reactor, int x, int y)
         {
+            Reactor = reactor;
+
             X = x;
             Y = y;
         }
@@ -35,8 +37,8 @@ namespace SharpChem
         private static readonly Sprite _bonderJoinSprite = new Sprite(new BitmapTexture2D(Properties.Resources.bonderjoin))
         { Colour = new Color4(0x80, 0x80, 0x80, 0xff), UseCentreAsOrigin = true };
 
-        public Bonder(int x, int y)
-            : base(x, y) { }
+        public Bonder(Reactor reactor, int x, int y)
+            : base(reactor, x, y) { }
 
         public override void Render(SpriteShader shader)
         {

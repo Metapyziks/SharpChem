@@ -159,7 +159,7 @@ namespace SharpChem
                 }).AddRegion(new ReactorRegion(6, 4, 4, 4) {
                     TileColor = ReactorRegion.ColorAD,
                     Label = RegionLabel.OutputD
-                }).AddBonder(4, 3).AddBonder(5, 3);
+                }).SetBonderQuota(2);
         }
 
         private List<ReactorRegion> _regions;
@@ -171,7 +171,7 @@ namespace SharpChem
 
         internal IEnumerable<ReactorRegion> Regions { get { return _regions; } }
 
-        internal IEnumerable<Widget> Widgets { get { return _widgets; } }
+        internal int BonderQuota { get; private set; }
 
         internal ReactorBuilder(int width, int height)
         {
@@ -188,9 +188,9 @@ namespace SharpChem
             return this;
         }
 
-        internal ReactorBuilder AddBonder(int x, int y)
+        internal ReactorBuilder SetBonderQuota(int quota)
         {
-            _widgets.Add(new Bonder(x, y));
+            BonderQuota = quota;
             return this;
         }
     }
@@ -202,8 +202,9 @@ namespace SharpChem
         
         private ReactorRegion _baseRegion;
         private IEnumerable<ReactorRegion> _regions;
-        private IEnumerable<Widget> _widgets;
+        private List<Widget> _widgets;
         private List<Molecule> _molecules;
+        private int _bonderQuota;
 
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -214,7 +215,7 @@ namespace SharpChem
         public IEnumerable<ReactorRegion> Inputs { get { return _regions.Where(x => x.IsInput); } }
         public IEnumerable<ReactorRegion> Outputs { get { return _regions.Where(x => x.IsOutput); } }
 
-        public IEnumerable<Bonder> Bonders { get { return _widgets.OfType<Bonder>(); } }
+        internal IEnumerable<Bonder> Bonders { get { return _widgets.OfType<Bonder>(); } }
 
         public ReactorRegion this[RegionLabel label]
         {
@@ -231,11 +232,9 @@ namespace SharpChem
             };
 
             _regions = builder.Regions;
-            _widgets = builder.Widgets;
+            _widgets = new List<Widget>();
 
-            foreach (var widget in _widgets) {
-                widget.Reactor = this;
-            }
+            _bonderQuota = builder.BonderQuota;
 
             _molecules = new List<Molecule>();
 
@@ -243,6 +242,20 @@ namespace SharpChem
             BlueWaldo = new Waldo(this, WaldoColor.Blue);
 
             TimeControl.Step += (sender, e) => Update();
+        }
+
+        public void PlaceBonder(int x, int y)
+        {
+            if (_bonderQuota <= 0) {
+                throw new InvalidOperationException("Bonders already placed.");
+            }
+
+            if (_widgets.Any(w => w.X == x && w.Y == y)) {
+                throw new InvalidOperationException("Widget already placed at that point.");
+            }
+
+            _bonderQuota -= 1;
+            _widgets.Add(new Bonder(this, x, y));
         }
 
         internal Molecule GrabMolecule(int x, int y)
@@ -303,6 +316,17 @@ namespace SharpChem
         internal void Update()
         {
             lock (this) {
+                if (_bonderQuota > 0) {
+                    for (int x = 1; x < Width - 1 && _bonderQuota > 0; ++x) {
+                        for (int y = 2; y < Height - 2; ++y) {
+                            if (_widgets.Any(w => w.X == x && w.Y == y))
+                                continue;
+
+                            PlaceBonder(x, y);
+                        }
+                    }
+                }
+
                 RedWaldo.Think();
                 BlueWaldo.Think();
             }
