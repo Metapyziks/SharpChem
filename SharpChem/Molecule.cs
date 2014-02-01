@@ -88,6 +88,13 @@ namespace SharpChem
             return _atoms.Any(a => a.X == x && a.Y == y);
         }
 
+        public bool IsWithinRegion(ReactorRegion region)
+        {
+            return region.X < Right && region.Y < Bottom
+                && region.X + region.Width > Left
+                && region.Y + region.Height > Top;
+        }
+
         public void Render(SpriteShader shader, Vector2 delta = default(Vector2))
         {
             foreach (var atom in _atoms) atom.RenderBonds(shader, delta);

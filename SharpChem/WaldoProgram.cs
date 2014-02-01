@@ -146,7 +146,16 @@ namespace SharpChem
                 throw new ArgumentException("Can't input from an output.");
             }
 
-            Reactor.DropMolecule(Reactor[region].InputMolecule());
+            if (!Reactor.Input(region)) Wait();
+        }
+
+        protected void Output(RegionLabel region)
+        {
+            if (!region.HasFlag(RegionLabel.Output)) {
+                throw new ArgumentException("Can't output to an input.");
+            }
+
+            if (!Reactor.Output(region)) Wait();
         }
 
         protected void Move(Direction dir, int steps)

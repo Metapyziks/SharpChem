@@ -66,7 +66,7 @@ namespace SharpChem
             _blueprints.Add(molecule, weighting);
         }
 
-        internal Molecule InputMolecule()
+        internal Molecule Input()
         {
             if (!Label.HasFlag(RegionLabel.Input)) {
                 throw new InvalidOperationException("Can't input a molecule from an output.");
@@ -85,11 +85,20 @@ namespace SharpChem
                 }
             }
 
-            if (input == null) return null;
-
             _lastPulse = TimeControl.Steps;
 
+            if (input == null) return null;
+            
             return input.Clone(X, Y);
+        }
+
+        internal bool Output(Molecule molecule)
+        {
+            _lastPulse = TimeControl.Steps;
+
+            if (molecule == null) return true;
+
+            return true;
         }
 
         internal void Render(SpriteShader shader)
@@ -221,10 +230,12 @@ namespace SharpChem
 
         internal Molecule GrabMolecule(int x, int y)
         {
-            var molecule = _molecules.FirstOrDefault(m => m.HitTest(x, y));
-            if (molecule != null) _molecules.Remove(molecule);
+            lock (_molecules) {
+                var molecule = _molecules.FirstOrDefault(m => m.HitTest(x, y));
+                if (molecule != null) _molecules.Remove(molecule);
 
-            return molecule;
+                return molecule;
+            }
         }
 
         internal void DropMolecule(Molecule molecule)
@@ -233,7 +244,44 @@ namespace SharpChem
                 throw new InvalidOperationException("Can't drop already dropped molecule.");
             }
 
-            _molecules.Add(molecule);
+            lock (_molecules) {
+                _molecules.Add(molecule);
+            }
+        }
+
+        internal bool Input(RegionLabel region)
+        {
+            if (!region.HasFlag(RegionLabel.Input)) {
+                throw new ArgumentException("Can't input from an output.");
+            }
+
+            lock (_molecules) {
+                var molecule = this[region].Input();
+
+                if (molecule != null) {
+                    DropMolecule(molecule);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        internal bool Output(RegionLabel region)
+        {
+            if (!region.HasFlag(RegionLabel.Output)) {
+                throw new ArgumentException("Can't output to an input.");
+            }
+
+            var reg = this[region];
+
+            lock (_molecules) {
+                var molecule = _molecules.FirstOrDefault(x => x.IsWithinRegion(reg));
+                _molecules.Remove(molecule);
+                reg.Output(molecule);
+
+                return _molecules.Count(x => x.IsWithinRegion(reg)) == 0;
+            }
         }
 
         public void Display(float scale = 1f)
@@ -258,8 +306,10 @@ namespace SharpChem
                 region.Render(shader);
             }
 
-            foreach (var molecule in _molecules) {
-                molecule.Render(shader);
+            lock (_molecules) {
+                foreach (var molecule in _molecules) {
+                    molecule.Render(shader);
+                }
             }
 
             RedWaldo.Render(shader);

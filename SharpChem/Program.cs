@@ -13,7 +13,9 @@
                 Move(Direction.Right, 5);
                 Move(Direction.Down, 3);
                 Drop();
-                Move(Direction.Left, 5);
+                Move(Direction.Left, 2);
+                Output(RegionLabel.OutputD);
+                Move(Direction.Left, 3);
             }
         }
     }
