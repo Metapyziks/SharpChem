@@ -21,10 +21,7 @@ namespace SharpChem
         MoveLeft = 1,
         MoveUp = 2,
         MoveRight = 3,
-        MoveDown = 4,
-        Grab = 5,
-        Drop = 6,
-        GrabDrop = 7
+        MoveDown = 4
     }
 
     public abstract class WaldoProgram : IDisposable
@@ -108,6 +105,21 @@ namespace SharpChem
             }
 
             FinishAction();
+        }
+
+        protected void Grab()
+        {
+            Waldo.Grabbed = true;
+        }
+
+        protected void Drop()
+        {
+            Waldo.Grabbed = false;
+        }
+
+        protected void GrabDrop()
+        {
+            Waldo.Grabbed = !Waldo.Grabbed;
         }
 
         protected void Move(Direction dir, int steps)

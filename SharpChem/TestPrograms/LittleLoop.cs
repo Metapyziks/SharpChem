@@ -9,6 +9,7 @@ class LittleLoop : WaldoProgram
             Move(Direction.Down, 2);
             Move(Direction.Left, 4);
             Move(Direction.Up, 2);
+            GrabDrop();
         }
     }
 }
