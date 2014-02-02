@@ -124,12 +124,10 @@ namespace SharpChem
             _text.UseCentreAsOrigin = true;
         }
 
-        public void AddBond(Atom other)
+        public bool AddBond(Atom other)
         {
             if (_bonds.Count >= Element.GetMaxBonds()) {
-                throw new InvalidOperationException(String.Format(
-                    "Can't bond a {0} atom more than {1} times.",
-                    Element.GetFullName(), Element.GetMaxBonds()));
+                return false;
             }
 
             if (!_bonds.ContainsKey(other)) {
@@ -137,6 +135,23 @@ namespace SharpChem
             } else {
                 _bonds[other] += 1;
             }
+
+            return true;
+        }
+
+        public bool BreakBond(Atom other)
+        {
+            if (!_bonds.ContainsKey(other)) {
+                return false;
+            }
+            
+            if (_bonds[other] <= 1) {
+                _bonds.Remove(other);
+            } else {
+                _bonds[other] -= 1;
+            }
+
+            return true;
         }
 
         public void RenderBonds(SpriteShader shader, Vector2 delta = default(Vector2))

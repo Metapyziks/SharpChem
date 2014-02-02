@@ -158,6 +158,16 @@ namespace SharpChem
             while (!Reactor.Output(region)) Wait();
         }
 
+        protected void AddBond()
+        {
+            Reactor.AddBond();
+        }
+
+        protected void BreakBond()
+        {
+            Reactor.BreakBond();
+        }
+
         protected void Move(Direction dir, int steps)
         {
             for (int i = 0; i < steps; ++i) Move(dir);

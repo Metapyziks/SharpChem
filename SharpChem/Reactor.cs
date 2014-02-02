@@ -305,6 +305,35 @@ namespace SharpChem
 
             return _molecules.Count(x => x.IsWithinRegion(reg)) == 0;
         }
+        
+        private IEnumerable<Tuple<Atom, Atom>> GetBondingPairs()
+        {
+            var onBonders = Bonders.Select(b => _molecules
+                .Where(m => m.HitTest(b.X, b.Y))
+                .Select(m => m.First(a => a.X == b.X && a.Y == b.Y))
+                .FirstOrDefault()).Where(a => a != null);
+
+            return onBonders.SelectMany(a => onBonders
+                .Where(b => a.ID < b.ID && (a.X != b.X) != (a.Y != b.Y) &&
+                    (Math.Abs(a.X - b.X) == 1 || Math.Abs(a.Y - b.Y) == 1))
+                .Select(b => Tuple.Create(a, b)));
+        }
+
+        internal void AddBond()
+        {
+            foreach (var pair in GetBondingPairs()) {
+                pair.Item1.AddBond(pair.Item2);
+                pair.Item2.AddBond(pair.Item1);
+            }
+        }
+
+        internal void BreakBond()
+        {
+            foreach (var pair in GetBondingPairs()) {
+                pair.Item1.BreakBond(pair.Item2);
+                pair.Item2.BreakBond(pair.Item1);
+            }
+        }
 
         public void Display(float scale = 1f)
         {
